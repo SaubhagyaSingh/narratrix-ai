@@ -1,0 +1,54 @@
+# 🔹 Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 🔹 Virtual Environments
+venv/
+env/
+.venv/
+
+# 🔹 Environment variables
+.env
+.env.*
+
+# 🔹 Logs
+*.log
+
+# 🔹 OS files
+.DS_Store
+Thumbs.db
+
+# 🔹 IDEs
+.vscode/
+.idea/
+
+# 🔹 Jupyter / ML
+.ipynb_checkpoints/
+
+# 🔹 Build / dist
+build/
+dist/
+*.egg-info/
+
+# 🔹 Mongo / local DB dumps
+*.bson
+*.json
+
+# 🔹 Redis dump
+dump.rdb
+
+# 🔹 Testing
+.coverage
+htmlcov/
+
+# 🔹 Node (if frontend later)
+node_modules/
+
+# 🔹 Milvus / Vector DB (important)
+milvus_data/
+milvus_logs/
+
+# 🔹 Docker (if you add later)
+*.pid
+*.sock
