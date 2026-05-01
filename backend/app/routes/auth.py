@@ -1,7 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from app.db.mongo import db
 from app.core.security import hash_password, verify_password, create_token
-from app.services.redis_service import redis_client
 from app.schemas.user_schema import UserCreate
 from app.schemas.user_schema import UserLogin
 

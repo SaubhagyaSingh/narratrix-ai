@@ -8,7 +8,6 @@ async def retrieve_context(query: str, user_id: str, book_id: str) -> str:
 
     # 2. Search Milvus for the most relevant chunks for this book
     collection = create_collection()
-    collection.load()
 
     results = collection.search(
         data=[query_embedding],
