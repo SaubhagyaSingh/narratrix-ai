@@ -12,13 +12,13 @@ export default function ChatMessage({ message, index }: { message: Message; inde
       transition={{ duration: 0.25, delay: index * 0.05 }}
     >
       {!isUser && (
-        <div className="w-10 h-10 bg-pop border-[3px] border-ink flex items-center justify-center font-comic text-white text-sm flex-shrink-0 shadow-comic">
+        <div className="w-10 h-10 bg-secondary border-[3px] border-base-300 flex items-center justify-center font-comic text-white text-sm flex-shrink-0 shadow-comic">
           AI
         </div>
       )}
 
-      <div className={`relative max-w-[70%] border-[3px] border-ink p-3 shadow-comic
-        ${isUser ? "bg-accent" : "bg-white"}`}
+      <div className={`relative max-w-[70%] border-[3px] border-base-300 p-3 shadow-comic
+        ${isUser ? "bg-accent" : "bg-base-100"}`}
       >
         {!isUser && (
           <div className="font-comic text-[11px] tracking-widest text-pop mb-1">NARRATRIX</div>

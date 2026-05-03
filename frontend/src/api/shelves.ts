@@ -7,5 +7,8 @@ export const getShelves = async () => {
 
 export const createShelf = async (name: string) => {
   const res = await api.post("/shelves/", { name });
-  return res.data;
+  return {
+    _id: res.data.id,  
+    name,
+  };
 };

@@ -2,6 +2,9 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
+html {
+  @apply bg-base-200 text-base-content;
+}
 @plugin "daisyui/theme" {
   name: "narratrix";
   default: true;

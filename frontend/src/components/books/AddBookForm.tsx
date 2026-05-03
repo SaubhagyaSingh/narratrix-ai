@@ -35,7 +35,7 @@ export default function AddBookForm({ shelves, onSubmit, onClose }: Props) {
         <div key={field}>
           <label className="block text-xs font-bold tracking-widest uppercase mb-1">{field}</label>
           <input
-            className="w-full border-[3px] border-ink px-3 py-2 font-body text-sm bg-panel focus:bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+            className="w-full border-[3px] border-base-300 px-3 py-2 font-body text-sm bg-base-200 focus:bg-base-100 focus:outline-none focus:ring-2 focus:ring-accent"
             placeholder={`Enter ${field}...`}
             value={form[field]}
             onChange={(e) => setForm((p) => ({ ...p, [field]: e.target.value }))}
@@ -46,7 +46,7 @@ export default function AddBookForm({ shelves, onSubmit, onClose }: Props) {
       <div>
         <label className="block text-xs font-bold tracking-widest uppercase mb-1">Tags (comma separated)</label>
         <input
-          className="w-full border-[3px] border-ink px-3 py-2 font-body text-sm bg-panel focus:bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+          className="w-full border-[3px] border-base-300 px-3 py-2 font-body text-sm bg-base-200 focus:bg-base-100 focus:outline-none focus:ring-2 focus:ring-accent"
           placeholder="e.g. fiction, drama, 1920s"
           value={form.tags}
           onChange={(e) => setForm((p) => ({ ...p, tags: e.target.value }))}
@@ -57,7 +57,7 @@ export default function AddBookForm({ shelves, onSubmit, onClose }: Props) {
         <div>
           <label className="block text-xs font-bold tracking-widest uppercase mb-1">Shelf</label>
           <select
-            className="w-full border-[3px] border-ink px-3 py-2 font-body text-sm bg-panel focus:outline-none"
+            className="w-full border-[3px] border-base-300 px-3 py-2 font-body text-sm bg-base-200 focus:outline-none"
             value={form.shelf_id}
             onChange={(e) => setForm((p) => ({ ...p, shelf_id: e.target.value }))}
           >
@@ -71,11 +71,11 @@ export default function AddBookForm({ shelves, onSubmit, onClose }: Props) {
 
       <div className="flex gap-3 mt-2">
         <button
-          className="bg-panel border-[3px] border-ink px-5 py-2 font-comic text-lg tracking-wide shadow-comic hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform"
+          className="bg-base-200 border-[3px] border-base-300 px-5 py-2 font-comic text-lg tracking-wide shadow-comic hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform"
           onClick={onClose}
         >CANCEL</button>
         <button
-          className="flex-1 bg-pop text-white border-[3px] border-ink py-2 font-comic text-lg tracking-wide shadow-comic hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform disabled:opacity-50"
+          className="flex-1 bg-secondary text-white border-[3px] border-base-300 py-2 font-comic text-lg tracking-wide shadow-comic hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform disabled:opacity-50"
           onClick={handleSubmit}
           disabled={loading || !form.title || !form.author}
         >

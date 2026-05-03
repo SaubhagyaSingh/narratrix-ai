@@ -10,6 +10,7 @@ export interface Book {
   theme?: string;
   tags: string[];
   shelf_id?: string;
+  has_pdf?: boolean;
 }
 
 export interface Shelf {

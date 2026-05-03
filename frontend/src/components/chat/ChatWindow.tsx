@@ -46,7 +46,7 @@ export default function ChatWindow({ bookId, bookTitle }: { bookId: string; book
               <div className="flex flex-wrap gap-2 justify-center max-w-sm">
                 {SUGGESTIONS.map((s) => (
                   <motion.button key={s}
-                    className="border-[2px] border-ink bg-white px-3 py-1.5 text-xs font-bold shadow-comic hover:bg-accent transition-colors"
+                    className="border-[2px] border-base-300 bg-base-100 px-3 py-1.5 text-xs font-bold shadow-comic hover:bg-accent transition-colors"
                     whileHover={{ x: -1, y: -1, boxShadow: "3px 3px 0 #1a1a1a" }}
                     whileTap={{ x: 1, y: 1 }}
                     onClick={() => sendMessage(s)}
@@ -70,15 +70,15 @@ export default function ChatWindow({ bookId, bookTitle }: { bookId: string; book
             animate={{ opacity: 1, y: 0 }}
             className="flex items-start gap-3"
           >
-            <div className="w-10 h-10 bg-pop border-[3px] border-ink flex items-center justify-center font-comic text-white text-sm flex-shrink-0 shadow-comic">
+            <div className="w-10 h-10 bg-secondary border-[3px] border-base-300 flex items-center justify-center font-comic text-white text-sm flex-shrink-0 shadow-comic">
               AI
             </div>
-            <div className="bg-white border-[3px] border-ink p-3 shadow-comic">
+            <div className="bg-base-100 border-[3px] border-base-300 p-3 shadow-comic">
               <div className="font-comic text-[11px] tracking-widest text-pop mb-2">THINKING...</div>
               <div className="flex gap-1.5 items-center">
                 {[0, 1, 2].map((i) => (
                   <motion.div key={i}
-                    className="w-2 h-2 bg-ink rounded-full"
+                    className="w-2 h-2 bg-neutral rounded-full"
                     animate={{ y: [0, -6, 0] }}
                     transition={{ duration: 0.7, repeat: Infinity, delay: i * 0.15 }}
                   />
@@ -90,7 +90,7 @@ export default function ChatWindow({ bookId, bookTitle }: { bookId: string; book
 
         {/* Error */}
         {error && (
-          <div className="border-[3px] border-ink bg-white p-3 text-center shadow-comic">
+          <div className="border-[3px] border-base-300 bg-base-100 p-3 text-center shadow-comic">
             <span className="font-comic text-pop text-lg">OOPS! </span>
             <span className="text-sm">{error}</span>
           </div>

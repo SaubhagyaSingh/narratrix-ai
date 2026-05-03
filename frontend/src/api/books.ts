@@ -19,7 +19,18 @@ export const createBook = async (data: {
   shelf_id?: string;
 }): Promise<Book> => {
   const res = await api.post("/books/", data);
-  return res.data;
+  
+  // backend returns { msg: "Book added", id: "..." }
+  // remap to Book shape so _id is always correct
+  return {
+    _id: res.data.id,
+    title: data.title,
+    author: data.author,
+    theme: data.theme,
+    tags: data.tags,
+    shelf_id: data.shelf_id,
+    has_pdf: false,
+  };
 };
 
 export const deleteBook = async (bookId: string) => {

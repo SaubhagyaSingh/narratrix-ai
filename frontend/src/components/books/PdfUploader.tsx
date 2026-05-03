@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, DragEvent } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { uploadPdf } from "@/api/ai";
 
@@ -8,6 +9,7 @@ type Stage = "idle" | "uploading" | "success" | "error";
 const STEPS = ["UPLOAD", "CHUNKING", "EMBEDDING", "STORING"];
 
 export default function PdfUploader({ bookId, onSuccess }: { bookId: string; onSuccess?: () => void }) {
+  const router = useRouter();
   const [stage, setStage] = useState<Stage>("idle");
   const [dragging, setDragging] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
@@ -59,8 +61,8 @@ export default function PdfUploader({ bookId, onSuccess }: { bookId: string; onS
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className={`relative border-[3px] border-dashed border-ink bg-white p-12 text-center cursor-pointer transition-all
-              ${dragging ? "bg-yellow-50 border-accent shadow-comic-xl -translate-x-1 -translate-y-1" : "shadow-comic hover:-translate-x-1 hover:-translate-y-1 hover:shadow-comic-lg"}`}
+            className={`relative border-[3px] border-dashed border-neutral bg-base-100 p-12 text-center cursor-pointer transition-all
+              ${dragging ? "bg-accent/20 border-accent shadow-comic-xl -translate-x-1 -translate-y-1" : "shadow-comic hover:-translate-x-1 hover:-translate-y-1 hover:shadow-comic-lg"}`}
             onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
             onDragLeave={() => setDragging(false)}
             onDrop={onDrop}
@@ -70,7 +72,7 @@ export default function PdfUploader({ bookId, onSuccess }: { bookId: string; onS
               onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
 
             <motion.div
-              className="w-20 h-20 border-[3px] border-ink bg-accent mx-auto mb-5 flex items-center justify-content-center shadow-comic"
+              className="w-20 h-20 border-[3px] border-neutral bg-accent mx-auto mb-5 flex items-center justify-center shadow-comic"
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             >
@@ -82,11 +84,11 @@ export default function PdfUploader({ bookId, onSuccess }: { bookId: string; onS
               </svg>
             </motion.div>
 
-            <h2 className="font-comic text-3xl tracking-wide mb-2">DROP YOUR PDF HERE</h2>
-            <p className="text-gray-500 text-sm mb-6">Drag & drop your book PDF, or click to browse</p>
+            <h2 className="font-comic text-3xl tracking-wide mb-2 text-base-content">DROP YOUR PDF HERE</h2>
+            <p className="text-base-content/60 text-sm mb-6">Drag & drop your book PDF, or click to browse</p>
 
             <motion.button
-              className="bg-pop text-white border-[3px] border-ink px-8 py-3 font-comic text-xl tracking-wide shadow-comic"
+              className="bg-secondary text-secondary-content border-[3px] border-neutral px-8 py-3 font-comic text-xl tracking-wide shadow-comic"
               whileHover={{ x: -2, y: -2, boxShadow: "6px 6px 0 #1a1a1a" }}
               whileTap={{ x: 2, y: 2, boxShadow: "2px 2px 0 #1a1a1a" }}
               onClick={(e) => { e.stopPropagation(); inputRef.current?.click(); }}
@@ -94,7 +96,7 @@ export default function PdfUploader({ bookId, onSuccess }: { bookId: string; onS
               📂 CHOOSE FILE
             </motion.button>
 
-            <p className="text-gray-400 text-xs mt-4 italic">Accepts .pdf files up to 50MB</p>
+            <p className="text-base-content/40 text-xs mt-4 italic">Accepts .pdf files up to 50MB</p>
           </motion.div>
         )}
 
@@ -103,11 +105,11 @@ export default function PdfUploader({ bookId, onSuccess }: { bookId: string; onS
           <motion.div key="uploading"
             initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="border-[3px] border-ink bg-white p-10 text-center shadow-comic"
+            className="border-[3px] border-neutral bg-base-100 p-10 text-center shadow-comic"
           >
             <h2 className="font-comic text-3xl tracking-wide mb-6">⚙️ PROCESSING YOUR PDF...</h2>
 
-            <div className="h-6 bg-panel border-[3px] border-ink overflow-hidden shadow-[3px_3px_0_#1a1a1a] mb-4">
+            <div className="h-6 bg-base-200 border-[3px] border-neutral overflow-hidden shadow-[3px_3px_0_#1a1a1a] mb-4">
               <motion.div
                 className="h-full"
                 style={{
@@ -123,8 +125,8 @@ export default function PdfUploader({ bookId, onSuccess }: { bookId: string; onS
             <div className="flex gap-2 mt-5">
               {STEPS.map((step, i) => (
                 <motion.div key={step}
-                  className={`flex-1 py-2 px-1 border-[2px] border-ink text-xs font-bold text-center transition-colors
-                    ${i < activeStep ? "bg-green-500 text-white" : i === activeStep ? "bg-accent" : "bg-panel"}`}
+                  className={`flex-1 py-2 px-1 border-[2px] border-neutral text-xs font-bold text-center transition-colors
+                    ${i < activeStep ? "bg-success text-white" : i === activeStep ? "bg-accent" : "bg-base-200"}`}
                   animate={i === activeStep ? { scale: [1, 1.04, 1] } : {}}
                   transition={{ duration: 0.6, repeat: Infinity }}
                 >
@@ -141,10 +143,10 @@ export default function PdfUploader({ bookId, onSuccess }: { bookId: string; onS
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ type: "spring", bounce: 0.5 }}
-            className="border-[3px] border-ink bg-white p-10 text-center shadow-comic relative overflow-hidden"
+            className="border-[3px] border-neutral bg-base-100 p-10 text-center shadow-comic relative overflow-hidden"
           >
             <motion.div
-              className="font-comic text-6xl text-pop inline-block"
+              className="font-comic text-6xl text-primary inline-block"
               style={{ textShadow: "3px 3px 0 #1a1a1a", transform: "rotate(-3deg)" }}
               initial={{ scale: 0, rotate: -15 }}
               animate={{ scale: 1, rotate: -3 }}
@@ -153,14 +155,14 @@ export default function PdfUploader({ bookId, onSuccess }: { bookId: string; onS
               POW!
             </motion.div>
 
-            <h2 className="font-comic text-3xl tracking-wide my-3">PDF PROCESSED SUCCESSFULLY!</h2>
-            <p className="text-gray-500 mb-6">Your book is indexed and ready for questions.</p>
+            <h2 className="font-comic text-3xl tracking-wide my-3 text-base-content">PDF PROCESSED SUCCESSFULLY!</h2>
+            <p className="text-base-content/60 mb-6">Your book is indexed and ready for questions.</p>
 
             <motion.button
-              className="bg-burst border-[3px] border-ink px-8 py-3 font-comic text-2xl tracking-wide shadow-comic"
+              className="bg-primary text-primary-content border-[3px] border-neutral px-8 py-3 font-comic text-2xl tracking-wide shadow-comic"
               whileHover={{ x: -2, y: -2, boxShadow: "7px 7px 0 #1a1a1a" }}
               whileTap={{ x: 2, y: 2 }}
-              onClick={() => window.location.href = `./chat`}
+              onClick={() => router.push(`/books/${bookId}/chat`)}
             >
               💬 START CHATTING →
             </motion.button>
@@ -172,12 +174,12 @@ export default function PdfUploader({ bookId, onSuccess }: { bookId: string; onS
           <motion.div key="error"
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
-            className="border-[3px] border-ink bg-white p-10 text-center shadow-comic"
+            className="border-[3px] border-neutral bg-base-100 p-10 text-center shadow-comic"
           >
-            <div className="font-comic text-5xl text-pop mb-3" style={{ textShadow: "3px 3px 0 #1a1a1a" }}>OOPS!</div>
-            <p className="text-gray-600 mb-6">{error}</p>
+            <div className="font-comic text-5xl text-error mb-3" style={{ textShadow: "3px 3px 0 #1a1a1a" }}>OOPS!</div>
+            <p className="text-base-content/70 mb-6">{error}</p>
             <motion.button
-              className="bg-accent border-[3px] border-ink px-8 py-3 font-comic text-xl tracking-wide shadow-comic"
+              className="bg-accent border-[3px] border-neutral px-8 py-3 font-comic text-xl tracking-wide shadow-comic"
               whileHover={{ x: -2, y: -2 }}
               onClick={() => setStage("idle")}
             >
