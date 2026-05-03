@@ -18,6 +18,7 @@ async def add_book(book: BookCreate, user=Depends(get_current_user)):
         "user_id": user["user_id"],
         "shelf_id": ObjectId(book.shelf_id) if book.shelf_id else None,
         "milvus_ids": [],
+        "has_pdf": book.has_pdf,
         "created_at": datetime.utcnow()
     }
 

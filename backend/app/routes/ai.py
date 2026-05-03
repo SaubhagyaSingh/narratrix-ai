@@ -1,7 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, Depends
 import os
 import uuid
-
+from bson import ObjectId
 from app.core.dependencies import get_current_user
 from app.services.pdf_service import extract_pdf_text
 from app.services.chunking_service import chunk_text
@@ -59,7 +59,11 @@ async def upload_pdf(
         })
 
     await db.chunks.insert_many(docs)
-
+    await db.books.update_one(
+        {"_id": ObjectId(book_id), "user_id": user["user_id"]},
+        {"$set": {"has_pdf": True}}
+    )
+    
     return {"msg": "PDF processed successfully"}
 
 

@@ -7,3 +7,4 @@ class BookCreate(BaseModel):
     theme: Optional[str] = None
     tags: List[str] = Field(default_factory=list)
     shelf_id: Optional[str] = None
+    has_pdf: bool = False
