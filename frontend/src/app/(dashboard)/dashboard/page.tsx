@@ -163,8 +163,7 @@ export default function DashboardPage() {
                   <div className="p-3">
                     <div className="font-comic text-base tracking-wide leading-tight">{book.title}</div>
                     <div className="text-xs text-gray-500 mt-0.5">{book.author}</div>
-                    {book.tags.length > 0 && (
-                      <div className="flex gap-1 mt-2 flex-wrap">
+{book.tags?.length > 0 && (                      <div className="flex gap-1 mt-2 flex-wrap">
                         {book.tags.slice(0, 2).map((tag) => (
                           <span key={tag} className="bg-panel border-[1.5px] border-ink text-[9px] font-bold px-1.5 py-0.5 tracking-wide">
                             {tag.toUpperCase()}

@@ -1,53 +1,97 @@
-import PdfUploader from "@/components/books/PdfUploader";
+"use client";
+ import { askQuestion } from "@/api/ai";
+import { use, useState } from "react";
 
-export default function BookPage({ params }: { params: { bookId: string } }) {
+type Message = {
+  role: "user" | "assistant";
+  content: string;
+};
+
+export default function ChatPage({
+  params,
+}: {
+  params: Promise<{ bookId: string }>;
+}) {
+  const { bookId } = use(params); // ✅ THIS IS THE FIX
+
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+
+
+const sendMessage = async () => {
+  if (!input.trim()) return;
+
+  const question = input; 
+
+  const userMsg: Message = { role: "user", content: question };
+  setMessages((prev) => [...prev, userMsg]);
+  setInput("");
+  setLoading(true);
+
+  try {
+    const data = await askQuestion(bookId, question); 
+
+    setMessages((prev) => [
+      ...prev,
+      { role: "assistant", content: data.answer },
+    ]);
+  } catch (err: any) {
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "assistant",
+        content: err?.message || "⚠ Error fetching response",
+      },
+    ]);
+  } finally {
+    setLoading(false);
+  }
+};
+
   return (
-    <div className="relative min-h-screen">
-      {/* Halftone background */}
-      <div className="fixed inset-0 halftone opacity-30 pointer-events-none z-0" />
+    <div className="min-h-screen flex flex-col bg-background">
+      {/* HEADER */}
+      <div className="border-b-4 border-ink p-4 font-comic text-2xl bg-accent">
+        📘 Chat with your Book
+      </div>
 
-      <div className="relative z-10 max-w-3xl mx-auto px-6 py-10">
-
-        {/* Book header */}
-        <div className="relative bg-white border-[3px] border-ink shadow-comic-lg p-6 mb-8 overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-[6px]"
-            style={{ background: "repeating-linear-gradient(90deg, #FFD23F 0 20px, #FF3B3B 20px 40px, #4FC3F7 40px 60px)" }} />
-          <h1 className="font-comic text-4xl tracking-wide mt-2">MY BOOK</h1>
-          <p className="text-gray-500 text-sm mt-1">Upload a PDF to start asking questions</p>
-        </div>
-
-        {/* Section label */}
-        <div className="flex items-center gap-3 mb-5">
-          <span className="font-comic text-xl tracking-widest text-pop border-[3px] border-ink bg-accent px-4 py-1 shadow-comic -rotate-1 inline-block">
-            ⚡ UPLOAD PDF
-          </span>
-          <div className="flex-1 h-[3px] bg-ink" />
-        </div>
-
-        {/* Uploader */}
-        <PdfUploader bookId={params.bookId} />
-
-        {/* Info grid */}
-        <div className="grid grid-cols-2 gap-5 mt-8">
-          <div className="border-[3px] border-ink bg-white p-5 shadow-comic">
-            <h3 className="font-comic text-xl tracking-wide border-b-2 border-ink pb-2 mb-3">💡 HOW IT WORKS</h3>
-            {["Upload your PDF", "AI splits into chunks", "Creates embeddings", "Ask anything!"].map((s, i) => (
-              <div key={i} className="flex justify-between text-sm py-1 border-b border-dashed border-gray-200">
-                <span>{s}</span>
-                <span>{["📄","✂️","🧠","💬"][i]}</span>
-              </div>
-            ))}
+      {/* MESSAGES */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        {messages.map((msg, i) => (
+          <div
+            key={i}
+            className={`max-w-xl p-3 border-[3px] border-ink shadow-comic ${
+              msg.role === "user"
+                ? "ml-auto bg-primary text-white"
+                : "mr-auto bg-white"
+            }`}
+          >
+            {msg.content}
           </div>
-          <div className="border-[3px] border-ink bg-white p-5 shadow-comic">
-            <h3 className="font-comic text-xl tracking-wide border-b-2 border-ink pb-2 mb-3">📊 BOOK STATS</h3>
-            {[["Status", "Ready to upload"], ["Model", "Qwen3-0.6B"], ["Search", "Milvus Vector DB"]].map(([k, v]) => (
-              <div key={k} className="flex justify-between text-sm py-1 border-b border-dashed border-gray-200">
-                <span className="text-gray-500">{k}</span>
-                <span className="font-bold">{v}</span>
-              </div>
-            ))}
+        ))}
+
+        {loading && (
+          <div className="mr-auto bg-white border-[3px] border-ink p-3 shadow-comic">
+            Thinking...
           </div>
-        </div>
+        )}
+      </div>
+
+      {/* INPUT */}
+      <div className="p-4 border-t-4 border-ink flex gap-3">
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Ask something about your PDF..."
+          className="flex-1 border-[3px] border-ink px-3 py-2"
+        />
+        <button
+          onClick={sendMessage}
+          className="bg-accent border-[3px] border-ink px-6 font-comic"
+        >
+          SEND ⚡
+        </button>
       </div>
     </div>
   );
