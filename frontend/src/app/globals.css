@@ -1,0 +1,90 @@
+@import url('https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&display=swap');
+@import "tailwindcss";
+@plugin "daisyui";
+
+@plugin "daisyui/theme" {
+  name: "narratrix";
+  default: true;
+  color-scheme: light;
+
+  --color-primary: #FFD23F;
+  --color-primary-content: #1a1a1a;
+
+  --color-secondary: #FF3B3B;
+  --color-secondary-content: #ffffff;
+
+  --color-accent: #4FC3F7;
+  --color-accent-content: #1a1a1a;
+
+  --color-neutral: #1a1a1a;
+  --color-neutral-content: #f5f0e8;
+
+  --color-base-100: #f5f0e8;
+  --color-base-200: #ede8df;
+  --color-base-300: #ddd8ce;
+  --color-base-content: #1a1a1a;
+
+  --color-error: #FF3B3B;
+  --color-warning: #FFD23F;
+  --color-success: #4CAF50;
+  --color-info: #4FC3F7;
+}
+
+@theme {
+  --font-comic: "Bangers", cursive;
+  --font-body: "Comic Neue", cursive;
+
+  --shadow-comic: 4px 4px 0px var(--color-neutral);
+  --shadow-comic-lg: 6px 6px 0px var(--color-neutral);
+  --shadow-comic-xl: 8px 8px 0px var(--color-neutral);
+}
+
+@layer base {
+  body {
+    background-color: var(--color-base-100);
+    color: var(--color-base-content);
+    font-family: var(--font-body);
+  }
+}
+
+@layer utilities {
+  .halftone {
+    background-image: radial-gradient(
+      circle,
+      var(--color-neutral) 1px,
+      transparent 1px
+    );
+    background-size: 12px 12px;
+  }
+
+  .panel {
+    border: 3px solid var(--color-neutral);
+    box-shadow: var(--shadow-comic);
+  }
+
+  .speech-bubble {
+    position: relative;
+    border: 3px solid var(--color-neutral);
+    box-shadow: var(--shadow-comic);
+    border-radius: 12px;
+  }
+
+  .speech-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -18px;
+    left: 24px;
+    border: 9px solid transparent;
+    border-top-color: var(--color-neutral);
+  }
+
+  .speech-bubble::before {
+    content: '';
+    position: absolute;
+    bottom: -12px;
+    left: 26px;
+    border: 7px solid transparent;
+    border-top-color: var(--color-base-100);
+    z-index: 1;
+  }
+}
