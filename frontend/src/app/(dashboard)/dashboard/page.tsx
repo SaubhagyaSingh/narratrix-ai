@@ -16,7 +16,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [activeShelf, setActiveShelf] = useState<string | undefined>(undefined);
   const { books, loading: booksLoading, addBook, removeBook } = useBooks(activeShelf);
-  const { shelves, addShelf } = useShelves();
+  const { shelves, addShelf, removeShelf } = useShelves();
   const [addBookOpen, setAddBookOpen] = useState(false);
   const [addShelfOpen, setAddShelfOpen] = useState(false);
   const [newShelfName, setNewShelfName] = useState("");

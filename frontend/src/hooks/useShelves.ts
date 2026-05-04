@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getShelves, createShelf } from "@/api/shelves";
+import { getShelves, createShelf, deleteShelf } from "@/api/shelves";
 import { Shelf } from "@/types";
 
 export function useShelves() {
@@ -18,5 +18,12 @@ export function useShelves() {
     return shelf;
   };
 
-  return { shelves, loading, addShelf };
+  const removeShelf = async (shelfId: string) => {
+    if (!confirm("Delete this shelf?")) return;
+    
+    await deleteShelf(shelfId);
+    setShelves((prev) => prev.filter((shelf) => shelf._id !== shelfId));
+  };
+
+  return { shelves, loading, addShelf, removeShelf };
 }

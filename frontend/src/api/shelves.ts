@@ -12,3 +12,8 @@ export const createShelf = async (name: string) => {
     name,
   };
 };
+
+export const deleteShelf = async (shelfId: string) => {
+  const res = await api.delete(`/shelves/${shelfId}`);
+  return res.data;
+};
