@@ -33,3 +33,17 @@ async def get_shelves(user=Depends(get_current_user)):
 
     return shelves
 
+@router.delete("/{shelf_id}")
+async def delete_shelf(shelf_id: str, user=Depends(get_current_user)):
+    # check if shelf exists AND belongs to user
+    shelf = await db.shelves.find_one({
+        "_id": ObjectId(shelf_id),
+        "user_id": user["user_id"]
+    })
+
+    if not shelf:
+        raise HTTPException(status_code=404, detail="Shelf not found")
+
+    await db.shelves.delete_one({"_id": ObjectId(shelf_id)})
+
+    return {"msg": "Shelf deleted successfully"}

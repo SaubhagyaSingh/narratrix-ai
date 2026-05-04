@@ -29,16 +29,38 @@ async def retrieve_context(query: str, user_id: str, book_id: str) -> str:
     sample = await db.chunks.find_one({"book_id": book_id})
     print("📦 Sample Mongo chunk:", sample)  # ADD
 
-    # 4. Fetch only those matching chunks from MongoDB
     chunks = await db.chunks.find({
-        "user_id": user_id,
-        "book_id": book_id,
-        "milvus_id": {"$in": milvus_ids}
-    }).to_list(5)
-    print("📄 Chunks matched from Mongo:", len(chunks))  # ADD
+    "user_id": user_id,
+    "book_id": book_id,
+    "milvus_id": {"$in": milvus_ids}
+}).to_list(5)
+
+    print("📄 Chunks matched from Mongo:", len(chunks))
 
     if not chunks:
         return "No relevant content found."
 
-    # 5. Return as a single context string
-    return "\n\n".join([c["chunk"] for c in chunks])
+    # 🔥 ADD THIS PART HERE
+    id_to_chunk = {c["milvus_id"]: c["chunk"] for c in chunks}
+
+    ordered_chunks = [
+    id_to_chunk[mid] for mid in milvus_ids if mid in id_to_chunk
+    ]
+
+    # 🔥 USE ORDERED CHUNKS INSTEAD
+    return "\n\n".join(ordered_chunks)
+    
+
+    # # 4. Fetch only those matching chunks from MongoDB
+    # chunks = await db.chunks.find({
+    #     "user_id": user_id,
+    #     "book_id": book_id,
+    #     "milvus_id": {"$in": milvus_ids}
+    # }).to_list(5)
+    # print("📄 Chunks matched from Mongo:", len(chunks))  # ADD
+
+    # if not chunks:
+    #     return "No relevant content found."
+
+    # # 5. Return as a single context string
+    # return "\n\n".join([c["chunk"] for c in chunks])

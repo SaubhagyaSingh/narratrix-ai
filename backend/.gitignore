@@ -52,3 +52,4 @@ milvus_logs/
 # 🔹 Docker (if you add later)
 *.pid
 *.sock
+uploads/
