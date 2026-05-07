@@ -1,48 +1,62 @@
-from transformers import AutoTokenizer, AutoModelForCausalLM
-import torch
+# app/services/llm_service.py
+from groq import Groq
+import os
+from dotenv import load_dotenv
+import re
 
-MODEL_NAME = "Qwen/Qwen2.5-0.5B-Instruct"
+load_dotenv()
 
-tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-model = AutoModelForCausalLM.from_pretrained(
-    MODEL_NAME,
-    torch_dtype=torch.float16,
-    device_map="auto"
-)
-model.eval()
+groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 def generate_answer(context: str, query: str) -> str:
-    messages = [
-        {
-            "role": "system",
-            "content": (
-                "You are a helpful assistant. Answer questions using ONLY the provided context. "
-                "Be concise. If the answer is not in the context, say: Not found in document."
-            )
-        },
-        {
-            "role": "user",
-            "content": f"Context:\n{context}\n\nQuestion: {query}"
-        }
-    ]
-
-    prompt = tokenizer.apply_chat_template(
-        messages,
-        tokenize=False,
-        add_generation_prompt=True
-    )
-
-    inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-
-    with torch.no_grad():
-        outputs = model.generate(
-            **inputs,
-            max_new_tokens=200,
-            temperature=0.3,
-            do_sample=True,
-            pad_token_id=tokenizer.eos_token_id
+    """Generate answer using Groq API with Qwen model"""
+    if not context or not query:
+        return "Error: Missing context or query"
+    
+    try:
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are a helpful assistant. Answer questions using ONLY the provided context. "
+                    "Be concise. If the answer is not in the context, say: Not found in document. "
+                    "Do NOT include any thinking or reasoning in your response. Just provide the direct answer."
+                )
+            },
+            {
+                "role": "user",
+                "content": f"Context:\n{context}\n\nQuestion: {query}"
+            }
+        ]
+        
+        completion = groq_client.chat.completions.create(
+            model="qwen/qwen3-32b",
+            messages=messages,
+            temperature=0,
+            max_completion_tokens=200,
+            top_p=0.95,
+            stream=False
         )
-
-    # Decode only the newly generated tokens, not the prompt
-    new_tokens = outputs[0][inputs["input_ids"].shape[1]:]
-    return tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
+        
+        answer = completion.choices[0].message.content
+        
+        # ✅ Method 1: Remove everything inside <think> tags
+        answer = re.sub(r'<think>.*?</think>\s*', '', answer, flags=re.DOTALL)
+        
+        # ✅ Method 2: If still has thinking, extract text after closing tag
+        if '<think>' in answer:
+            # Split by closing tag and take the part after it
+            parts = answer.split('</think>')
+            if len(parts) > 1:
+                answer = parts[-1].strip()
+        
+        # ✅ Method 3: Clean up extra whitespace
+        answer = re.sub(r'\n\s*\n', '\n', answer)
+        answer = answer.strip()
+        
+        print(f"✅ Generated answer: {len(answer)} chars")
+        return answer
+        
+    except Exception as e:
+        print(f"❌ LLM Error: {str(e)}")
+        raise
