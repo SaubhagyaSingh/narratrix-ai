@@ -13,7 +13,7 @@ from app.services.llm_service import generate_answer
 
 router = APIRouter()
 
-UPLOAD_DIR = "uploads"
+UPLOAD_DIR = "/tmp"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
