@@ -4,8 +4,13 @@ python-dotenv
 redis
 pymilvus
 sqlalchemy
-psycopg2-binary
+psycopg[binary]
 passlib[bcrypt]
 python-jose
 motor
 pydantic[email]
+python-multipart
+httpx
+pypdf
+huggingface_hub
+groq
