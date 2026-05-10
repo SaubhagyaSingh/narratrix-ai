@@ -15,20 +15,35 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+const handleSignup = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    try {
-      await signup({ email, password });
-      router.push("/login");
-    } catch (err: any) {
-      setError(err?.response?.data?.detail || "Signup failed");
-    } finally {
-      setLoading(false);
+  setLoading(true);
+  setError("");
+
+  if (!email.trim()) {
+    setError("Email is required");
+    setLoading(false);
+    return;
+  }
+
+  try {
+    await signup({ email, password });
+    router.push("/login");
+  } catch (err: any) {
+    const detail = err?.response?.data?.detail;
+
+    if (Array.isArray(detail)) {
+      setError(detail.map((e: any) => e.msg).join(", "));
+    } else if (typeof detail === "string") {
+      setError(detail);
+    } else {
+      setError("Signup failed");
     }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="relative min-h-screen overflow-hidden flex items-center justify-center p-4">
