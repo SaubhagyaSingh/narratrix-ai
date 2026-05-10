@@ -24,15 +24,34 @@ export default function ChatPage({
   const [loading, setLoading] = useState(false);
   const [actionWord, setActionWord] = useState("ZAP!");
   const bottomRef = useRef<HTMLDivElement>(null);
-  const [speaking, setSpeaking] = useState(false);
-
+  const [playingIndex, setPlayingIndex] = useState<number | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-const playAudio = async (text: string) => {
+const playAudio = async (text: string, index: number) => {
   try {
-    setSpeaking(true);
+
+    // ✅ If same audio clicked again → stop it
+    if (playingIndex === index && audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+
+      setPlayingIndex(null);
+
+      audioRef.current = null;
+
+      return;
+    }
+
+    // ✅ Stop previous audio if another one is playing
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+
+    setPlayingIndex(index);
 
     const blob = await generateSpeech(text);
 
@@ -40,20 +59,30 @@ const playAudio = async (text: string) => {
 
     const audio = new Audio(audioUrl);
 
+    audioRef.current = audio;
+
     audio.onended = () => {
-      setSpeaking(false);
+      setPlayingIndex(null);
+
       URL.revokeObjectURL(audioUrl);
+
+      audioRef.current = null;
     };
 
     audio.onerror = () => {
-      setSpeaking(false);
+      setPlayingIndex(null);
+
+      audioRef.current = null;
     };
 
     await audio.play();
 
   } catch (err) {
     console.error(err);
-    setSpeaking(false);
+
+    setPlayingIndex(null);
+
+    audioRef.current = null;
   }
 };
 
@@ -186,13 +215,12 @@ const playAudio = async (text: string) => {
       </p>
 
       <button
-        onClick={() => playAudio(msg.content)}
-        disabled={speaking}
+        onClick={() => playAudio(msg.content, i)}
         className="mt-3 font-comic text-xs px-3 py-1 bg-accent text-neutral border-[2px] border-neutral shadow-comic hover:brightness-105 disabled:opacity-50"
         style={{ borderRadius: "4px" }}
       >
-        {speaking ? "🔊 PLAYING..." : "▶ PLAY AUDIO"}
-      </button>
+{playingIndex === i ? "⏹ STOP AUDIO" : "▶ PLAY AUDIO"}   
+</button>
     </div>
   </div>
 </div>
