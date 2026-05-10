@@ -1,4 +1,5 @@
 # app/services/llm_service.py
+
 from groq import Groq
 import os
 from dotenv import load_dotenv
@@ -6,57 +7,107 @@ import re
 
 load_dotenv()
 
-groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+groq_client = Groq(
+    api_key=os.getenv("GROQ_API_KEY")
+)
+
+def clean_reasoning(answer: str) -> str:
+    """
+    Remove reasoning traces from Qwen responses
+    """
+
+    # Remove <think> blocks
+    answer = re.sub(
+        r'<think>.*?</think>',
+        '',
+        answer,
+        flags=re.DOTALL
+    )
+
+    # Remove common reasoning starters
+    reasoning_patterns = [
+        r"^Okay,.*?(?=[A-Z])",
+        r"^Let's see.*?(?=[A-Z])",
+        r"^The user is asking.*?(?=[A-Z])",
+        r"^First, I'll.*?(?=[A-Z])",
+        r"^I need to.*?(?=[A-Z])",
+    ]
+
+    for pattern in reasoning_patterns:
+        answer = re.sub(
+            pattern,
+            '',
+            answer,
+            flags=re.DOTALL
+        )
+
+    # Cleanup whitespace
+    answer = re.sub(r'\n\s*\n', '\n', answer)
+    answer = answer.strip()
+
+    return answer
+
 
 def generate_answer(context: str, query: str) -> str:
-    """Generate answer using Groq API with Qwen model"""
+    """
+    Generate answer using Groq API
+    """
+
     if not context or not query:
         return "Error: Missing context or query"
-    
+
     try:
-        messages = [
-            {
-                "role": "system",
-                "content": (
-                    "You are a helpful assistant. Answer questions using ONLY the provided context. "
-                    "Be concise. If the answer is not in the context, say: Not found in document. "
-                    "Do NOT include any thinking or reasoning in your response. Just provide the direct answer."
-                )
-            },
-            {
-                "role": "user",
-                "content": f"Context:\n{context}\n\nQuestion: {query}"
-            }
-        ]
-        
+
         completion = groq_client.chat.completions.create(
             model="qwen/qwen3-32b",
-            messages=messages,
+            messages=[
+                {
+                    "role": "system",
+                    "content": """
+You are a RAG assistant.
+
+STRICT RULES:
+- Answer ONLY from provided context
+- NEVER explain reasoning
+- NEVER think step-by-step
+- NEVER output internal thoughts
+- NEVER say things like:
+  'Okay, let's see'
+  'The user is asking'
+  'First I will'
+- ONLY give the final answer
+- Keep answers concise
+- If answer missing, say:
+Not found in document.
+"""
+                },
+                {
+                    "role": "user",
+                    "content": f"""
+Context:
+{context}
+
+Question:
+{query}
+
+Answer:
+"""
+                }
+            ],
             temperature=0,
-            max_completion_tokens=200,
-            top_p=0.95,
+            max_completion_tokens=150,
+            top_p=0.9,
             stream=False
         )
-        
+
         answer = completion.choices[0].message.content
-        
-        # ✅ Method 1: Remove everything inside <think> tags
-        answer = re.sub(r'<think>.*?</think>\s*', '', answer, flags=re.DOTALL)
-        
-        # ✅ Method 2: If still has thinking, extract text after closing tag
-        if '<think>' in answer:
-            # Split by closing tag and take the part after it
-            parts = answer.split('</think>')
-            if len(parts) > 1:
-                answer = parts[-1].strip()
-        
-        # ✅ Method 3: Clean up extra whitespace
-        answer = re.sub(r'\n\s*\n', '\n', answer)
-        answer = answer.strip()
-        
+
+        answer = clean_reasoning(answer)
+
         print(f"✅ Generated answer: {len(answer)} chars")
+
         return answer
-        
+
     except Exception as e:
         print(f"❌ LLM Error: {str(e)}")
         raise

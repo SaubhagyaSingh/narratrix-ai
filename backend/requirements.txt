@@ -14,3 +14,7 @@ httpx
 pypdf
 huggingface_hub
 groq
+langchain-text-splitters
+langchain-huggingface
+langchain
+langchain-groq

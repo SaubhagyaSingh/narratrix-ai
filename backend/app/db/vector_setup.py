@@ -9,6 +9,7 @@ def create_collection():
     else:
         fields = [
             FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=True),
+            FieldSchema(name="user_id", dtype=DataType.VARCHAR, max_length=100),
             FieldSchema(name="book_id", dtype=DataType.VARCHAR, max_length=100),
             FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=EMBEDDING_DIM)
         ]
