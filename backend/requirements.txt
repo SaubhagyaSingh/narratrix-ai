@@ -18,3 +18,5 @@ langchain-text-splitters
 langchain-huggingface
 langchain
 langchain-groq
+elevenlabs
+resend

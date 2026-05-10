@@ -14,7 +14,7 @@ class SpeechRequest(BaseModel):
 @router.post("/speak")
 async def speak(req: SpeechRequest):
 
-    filepath = text_to_speech(req.text)
+    filepath = await text_to_speech(req.text)
 
     return FileResponse(
         path=filepath,
