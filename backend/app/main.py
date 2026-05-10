@@ -7,7 +7,7 @@ from app.db.vector_setup import create_collection
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from pymilvus import utility
-
+from app.routes import audio
 load_dotenv()
 
 @asynccontextmanager
@@ -54,7 +54,7 @@ app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 app.include_router(books.router, prefix="/books", tags=["Books"])
 app.include_router(shelves.router, prefix="/shelves", tags=["Shelves"])
 app.include_router(ai.router, prefix="/ai", tags=["AI"])
-
+app.include_router(audio.router, prefix="/audio", tags=["Audio"])
 @app.get("/")
 def root():
     return {
