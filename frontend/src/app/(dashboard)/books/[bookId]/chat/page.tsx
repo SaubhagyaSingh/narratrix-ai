@@ -4,7 +4,7 @@
 
 import { askQuestion } from "@/api/ai";
 import { use, useState, useEffect, useRef } from "react";
-
+import { generateSpeech } from "@/api/audio";
 
 type Message = {
   role: "user" | "assistant";
@@ -24,10 +24,38 @@ export default function ChatPage({
   const [loading, setLoading] = useState(false);
   const [actionWord, setActionWord] = useState("ZAP!");
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [speaking, setSpeaking] = useState(false);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
+
+const playAudio = async (text: string) => {
+  try {
+    setSpeaking(true);
+
+    const blob = await generateSpeech(text);
+
+    const audioUrl = URL.createObjectURL(blob);
+
+    const audio = new Audio(audioUrl);
+
+    audio.onended = () => {
+      setSpeaking(false);
+      URL.revokeObjectURL(audioUrl);
+    };
+
+    audio.onerror = () => {
+      setSpeaking(false);
+    };
+
+    await audio.play();
+
+  } catch (err) {
+    console.error(err);
+    setSpeaking(false);
+  }
+};
 
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
@@ -138,18 +166,36 @@ export default function ChatPage({
               </div>
             ) : (
               <div key={i} className="flex justify-start">
-                <div className="max-w-[75%]">
-                  <div className="flex items-center gap-1.5 mb-1 ml-0.5">
-                    <div className="w-4 h-4 bg-secondary border-[1.5px] border-neutral rounded-full flex items-center justify-center">
-                      <span className="text-white font-comic text-[7px] leading-none">AI</span>
-                    </div>
-                    <span className="font-comic text-[10px] text-neutral/45 uppercase tracking-wider">Narratrix</span>
-                  </div>
-                  <div className="speech-bubble bg-base-100 px-3 py-2">
-                    <p className="text-sm leading-snug">{msg.content}</p>
-                  </div>
-                </div>
-              </div>
+  <div className="max-w-[75%]">
+    
+    <div className="flex items-center gap-1.5 mb-1 ml-0.5">
+      <div className="w-4 h-4 bg-secondary border-[1.5px] border-neutral rounded-full flex items-center justify-center">
+        <span className="text-white font-comic text-[7px] leading-none">
+          AI
+        </span>
+      </div>
+
+      <span className="font-comic text-[10px] text-neutral/45 uppercase tracking-wider">
+        Narratrix
+      </span>
+    </div>
+
+    <div className="speech-bubble bg-base-100 px-3 py-2">
+      <p className="text-sm leading-snug whitespace-pre-wrap">
+        {msg.content}
+      </p>
+
+      <button
+        onClick={() => playAudio(msg.content)}
+        disabled={speaking}
+        className="mt-3 font-comic text-xs px-3 py-1 bg-accent text-neutral border-[2px] border-neutral shadow-comic hover:brightness-105 disabled:opacity-50"
+        style={{ borderRadius: "4px" }}
+      >
+        {speaking ? "🔊 PLAYING..." : "▶ PLAY AUDIO"}
+      </button>
+    </div>
+  </div>
+</div>
             )
           )}
 
