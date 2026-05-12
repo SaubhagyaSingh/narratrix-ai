@@ -1,7 +1,7 @@
 from pymilvus import FieldSchema, CollectionSchema, DataType, Collection, utility
 
 COLLECTION_NAME = "book_chunks"
-EMBEDDING_DIM = 1024  # Qwen3-Embedding-0.6B actual output dim
+EMBEDDING_DIM = 1024  
 
 def create_collection():
     if COLLECTION_NAME in utility.list_collections():
@@ -9,6 +9,7 @@ def create_collection():
     else:
         fields = [
             FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=True),
+            FieldSchema(name="user_id", dtype=DataType.VARCHAR, max_length=100),
             FieldSchema(name="book_id", dtype=DataType.VARCHAR, max_length=100),
             FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=EMBEDDING_DIM)
         ]

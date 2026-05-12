@@ -1,66 +1,48 @@
-from app.services.embedding_service import get_embeddings
-from app.db.vector_setup import create_collection
-from app.db.mongo import db
+# app/services/rag_service.py
 
-async def retrieve_context(query: str, user_id: str, book_id: str) -> str:
-    # 1. Embed the query using the same model used during upload
-    query_embedding = get_embeddings([query])[0]
+from langchain_groq import ChatGroq
+from app.services.retrieval_service import retrieve_context
+from app.services.llm_service import generate_answer
+import os
+from dotenv import load_dotenv
 
-    # 2. Search Milvus for the most relevant chunks for this book
-    collection = create_collection()
+load_dotenv()
 
-    results = collection.search(
-        data=[query_embedding],
-        anns_field="embedding",
-        param={"metric_type": "COSINE", "params": {"nprobe": 10}},
-        limit=5,
-        expr=f'book_id == "{book_id}"',
-        output_fields=["id"]
-    )
-    print("🔍 Milvus hits:", len(results[0]) if results else 0)  # ADD
+llm = ChatGroq(
+    model="qwen/qwen3-32b",
+    temperature=0,
+    max_tokens=200,
+    api_key=os.getenv("GROQ_API_KEY")
+)
 
-    if not results or not results[0]:
-        return "No relevant content found."
-
-    # 3. Pull the milvus IDs from search results
-    milvus_ids = [str(hit.id) for hit in results[0]]
-    print("🆔 Milvus IDs from search:", milvus_ids)  # ADD
-
-    sample = await db.chunks.find_one({"book_id": book_id})
-    print("📦 Sample Mongo chunk:", sample)  # ADD
-
-    chunks = await db.chunks.find({
-    "user_id": user_id,
-    "book_id": book_id,
-    "milvus_id": {"$in": milvus_ids}
-}).to_list(5)
-
-    print("📄 Chunks matched from Mongo:", len(chunks))
-
-    if not chunks:
-        return "No relevant content found."
-
-    # 🔥 ADD THIS PART HERE
-    id_to_chunk = {c["milvus_id"]: c["chunk"] for c in chunks}
-
-    ordered_chunks = [
-    id_to_chunk[mid] for mid in milvus_ids if mid in id_to_chunk
-    ]
-
-    # 🔥 USE ORDERED CHUNKS INSTEAD
-    return "\n\n".join(ordered_chunks)
+class RAGPipeline:
     
+    def __init__(self):
+        self.llm = llm
+        
+    async def answer_question(self, query: str, user_id: str, book_id: str) -> dict:
+        try:
+            # Retrieve context
+            print(f"🔎 Retrieving context for query: {query[:50]}...")
+            context = await retrieve_context(query, user_id, book_id)
+            
+            # Generate clean answer
+            print(f"💭 Generating answer...")
+            answer = generate_answer(context, query)
+            
+            return {
+                "success": True,
+                "answer": answer,
+                "context_length": len(context),
+                "query": query
+            }
+            
+        except Exception as e:
+            print(f"❌ RAG Pipeline Error: {str(e)}")
+            return {
+                "success": False,
+                "error": str(e),
+                "answer": "An error occurred while processing your question."
+            }
 
-    # # 4. Fetch only those matching chunks from MongoDB
-    # chunks = await db.chunks.find({
-    #     "user_id": user_id,
-    #     "book_id": book_id,
-    #     "milvus_id": {"$in": milvus_ids}
-    # }).to_list(5)
-    # print("📄 Chunks matched from Mongo:", len(chunks))  # ADD
-
-    # if not chunks:
-    #     return "No relevant content found."
-
-    # # 5. Return as a single context string
-    # return "\n\n".join([c["chunk"] for c in chunks])
+rag_pipeline = RAGPipeline()
