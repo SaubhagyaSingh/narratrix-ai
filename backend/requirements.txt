@@ -23,5 +23,6 @@ langchain-text-splitters
 langchain-huggingface
 langchain
 langchain-groq
-
+langchain-core
+langchain-community
 elevenlabs
