@@ -1,15 +1,14 @@
-# app/services/tts_service.py
+# app/services/tts_service.py - UPDATED for MongoDB GridFS
 
 import os
 import hashlib
 from datetime import datetime
-
 from elevenlabs.client import ElevenLabs
-from elevenlabs import save
 
 from dotenv import load_dotenv
-
-from app.db.mongo import db
+from app.db.mongo import db, mongo_db
+from app.routes import audio
+from app.services.file_storage_service import FileStorageService
 
 load_dotenv()
 
@@ -17,17 +16,15 @@ client = ElevenLabs(
     api_key=os.getenv("ELEVENLABS_API_KEY")
 )
 
-AUDIO_DIR = "audio"
 
-# Create audio folder if missing
-os.makedirs(AUDIO_DIR, exist_ok=True)
-
-
-async def text_to_speech(text: str):
+async def text_to_speech(text: str) -> dict:
     """
-    Generate speech with caching.
-    If audio already exists for same text,
-    return cached file instead of regenerating.
+    Generate speech with caching using MongoDB GridFS.
+    If audio already exists for same text, return cached file_id instead.
+    
+    Returns dict with:
+    - file_id: GridFS file ID for the audio
+    - is_cached: Boolean indicating if it was cached
     """
 
     # Generate SHA256 hash
@@ -40,12 +37,13 @@ async def text_to_speech(text: str):
         "hash": text_hash
     })
 
-    # 2. If exists and file exists on disk
-    if existing_audio and os.path.exists(existing_audio["audio_path"]):
-
-        print("⚡ Using cached audio")
-
-        return existing_audio["audio_path"]
+    # 2. If exists, return cached file_id
+    if existing_audio and existing_audio.get("audio_file_id"):
+        print("⚡ Using cached audio from GridFS")
+        return {
+            "file_id": existing_audio["audio_file_id"],
+            "is_cached": True
+        }
 
     # 3. Generate new audio
     print("🎤 Generating new audio...")
@@ -56,25 +54,30 @@ async def text_to_speech(text: str):
         text=text
     )
 
-    # Unique filename
-    filename = f"{text_hash}.mp3"
-
-    filepath = os.path.join(
-        AUDIO_DIR,
-        filename
+    # Convert audio to bytes
+# Convert generator/chunks to bytes
+    audio_content = b"".join(audio)
+    # 4. Save to MongoDB GridFS
+    file_storage = FileStorageService(mongo_db.db)
+    filename = f"audio_{text_hash}.mp3"
+    
+    audio_file_id = await file_storage.save_audio(
+        audio_content=audio_content,
+        filename=filename,
+        text_hash=text_hash
     )
 
-    # Save MP3
-    save(audio, filepath)
-
-    # 4. Store cache record
+    # 5. Store cache record (without storing full audio)
     await db.audio_cache.insert_one({
         "hash": text_hash,
         "text": text,
-        "audio_path": filepath,
+        "audio_file_id": audio_file_id,  # ✅ Reference to GridFS file
         "created_at": datetime.utcnow()
     })
 
-    print("✅ Audio cached")
+    print("✅ Audio generated and cached in GridFS")
 
-    return filepath
+    return {
+        "file_id": audio_file_id,
+        "is_cached": False
+    }

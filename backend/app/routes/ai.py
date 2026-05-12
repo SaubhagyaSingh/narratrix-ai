@@ -1,14 +1,14 @@
-# app/routes/ai.py - FIXED form data handling
-from fastapi import APIRouter, HTTPException, File, UploadFile, Depends, Query, Form
+# app/routes/ai.py - UPDATED for MongoDB GridFS
+
+from fastapi import APIRouter, HTTPException, File, UploadFile, Depends, Query
 from pydantic import BaseModel
 from typing import Optional
-import os
-import shutil
 from bson import ObjectId
 from app.core.security import get_current_user
+from app.services.file_storage_service import FileStorageService
 from app.services.pdf_upload_service import upload_and_process_pdf
 from app.services.rag_service import rag_pipeline
-from app.db.mongo import db
+from app.db.mongo import db, mongo_db
 
 router = APIRouter()
 
@@ -18,14 +18,13 @@ class AnswerResponse(BaseModel):
     context_length: Optional[int] = None
     error: Optional[str] = None
 
-# ✅ FIXED: Accept title as Form data (not Query)
 @router.post("/upload-pdf/{book_id}")
 async def upload_pdf(
     book_id: str,
     file: UploadFile = File(...),
     current_user = Depends(get_current_user)
 ):
-    """Upload PDF and process with LangChain"""
+    """Upload PDF and process with LangChain - stores in MongoDB GridFS"""
     user_id = current_user.get("user_id")
     
     if not book_id:
@@ -34,40 +33,36 @@ async def upload_pdf(
     try:
         print(f"📤 Uploading PDF: {file.filename} for book {book_id}")
         
-        # Save temporary file
-        temp_file = f"/tmp/{file.filename}"
-        with open(temp_file, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        # Read file bytes (no temp file)
+        file_bytes = await file.read()
         
         print(f"📝 Processing PDF...")
         
         book = await db.books.find_one({"_id": ObjectId(book_id)})
         if not book:
             raise HTTPException(status_code=404, detail="Book not found")
+        
+        # Verify user owns this book
+        if book.get("user_id") != user_id:
+            raise HTTPException(status_code=403, detail="Unauthorized")
+        
         title = book.get("title", "Untitled")
 
-        # Process PDF with LangChain
+        # Process PDF with LangChain (now with bytes)
         result = await upload_and_process_pdf(
-            file_path=temp_file,
+            file_bytes=file_bytes,
+            filename=file.filename,
             user_id=user_id,
             book_id=book_id,
             title=title
         )
         
-        # Cleanup
-        if os.path.exists(temp_file):
-            os.remove(temp_file)
-        
         print(f"✅ PDF processed: {result.get('chunks_created')} chunks created")
-        
-        # Update book with PDF status
-        await db.books.update_one(
-            {"_id": ObjectId(book_id)},
-            {"$set": {"has_pdf": True, "chunks_count": result.get("chunks_created", 0)}}
-        )
         
         return result
         
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"❌ Upload error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -115,6 +110,10 @@ async def get_chat_history(
             "book_id": book_id
         }).to_list(50)
         
+        # Convert ObjectIds to strings
+        for chat in chats:
+            chat["_id"] = str(chat["_id"])
+        
         return {"chats": chats, "count": len(chats)}
         
     except Exception as e:
@@ -140,4 +139,45 @@ async def delete_chat(
         return {"message": "Chat deleted", "deleted_count": result.deleted_count}
         
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/download-pdf/{book_id}")
+async def download_pdf(
+    book_id: str,
+    current_user = Depends(get_current_user)
+):
+    """Download original PDF from GridFS"""
+    from fastapi.responses import StreamingResponse
+    
+    user_id = current_user.get("user_id")
+    
+    try:
+        # Get book and verify ownership
+        book = await db.books.find_one({
+            "_id": ObjectId(book_id),
+            "user_id": user_id
+        })
+        
+        if not book:
+            raise HTTPException(status_code=404, detail="Book not found")
+        
+        pdf_file_id = book.get("pdf_file_id")
+        if not pdf_file_id:
+            raise HTTPException(status_code=404, detail="PDF not found")
+        
+        # Retrieve from GridFS
+
+        file_storage = FileStorageService(mongo_db.db)
+        pdf_bytes = await file_storage.get_pdf(pdf_file_id)
+        
+        return StreamingResponse(
+            iter([pdf_bytes]),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename={book.get('title', 'document')}.pdf"}
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Download error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
