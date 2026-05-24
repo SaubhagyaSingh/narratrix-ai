@@ -6,20 +6,32 @@ export function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/signup");
-  const isProtectedRoute =
-    pathname.startsWith("/") &&
-    !pathname.startsWith("/login") &&
-    !pathname.startsWith("/signup");
+  const publicRoutes = [
+    "/login",
+    "/signup",
+    "/verify"
+  ];
 
-  // 🔒 If not logged in → block protected routes
-  if (!token && isProtectedRoute) {
-    return NextResponse.redirect(new URL("/login", request.url));
+  const isPublicRoute = publicRoutes.some(
+    (route) => pathname.startsWith(route)
+  );
+
+  // Protect everything except public routes
+  if (!token && !isPublicRoute) {
+    return NextResponse.redirect(
+      new URL("/login", request.url)
+    );
   }
 
-  // 🔁 If logged in → block auth pages
+  // Prevent logged-in users from seeing auth pages
+  const isAuthPage =
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/signup");
+
   if (token && isAuthPage) {
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.redirect(
+      new URL("/", request.url)
+    );
   }
 
   return NextResponse.next();
