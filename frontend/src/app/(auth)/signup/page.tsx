@@ -10,40 +10,88 @@ export default function Signup() {
   const router = useRouter();
 
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("test123");
+  const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-const handleSignup = async (e: React.FormEvent) => {
-  e.preventDefault();
+  const normalizeEmail = (email: string) => {
+    return email.trim().toLowerCase();
+  };
 
-  setLoading(true);
-  setError("");
+  const validateEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
 
-  if (!email.trim()) {
-    setError("Email is required");
-    setLoading(false);
-    return;
-  }
+  const validatePassword = (password: string) => {
+    const errors = [];
 
-  try {
-    await signup({ email, password });
-    router.push("/login");
-  } catch (err: any) {
-    const detail = err?.response?.data?.detail;
-
-    if (Array.isArray(detail)) {
-      setError(detail.map((e: any) => e.msg).join(", "));
-    } else if (typeof detail === "string") {
-      setError(detail);
-    } else {
-      setError("Signup failed");
+    if (password.length < 8) {
+      errors.push("Password must be at least 8 characters");
     }
-  } finally {
-    setLoading(false);
-  }
-};
+
+    if (!/[A-Z]/.test(password)) {
+      errors.push("Password needs one uppercase letter");
+    }
+
+    if (!/[a-z]/.test(password)) {
+      errors.push("Password needs one lowercase letter");
+    }
+
+    if (!/[0-9]/.test(password)) {
+      errors.push("Password needs one number");
+    }
+
+    return errors;
+  };
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    setLoading(true);
+    setError("");
+
+    const normalizedEmail = normalizeEmail(email);
+
+    if (!normalizedEmail) {
+      setError("Email is required");
+      setLoading(false);
+      return;
+    }
+
+    if (!validateEmail(normalizedEmail)) {
+      setError("Invalid email format");
+      setLoading(false);
+      return;
+    }
+
+    const passwordErrors = validatePassword(password);
+
+    if (passwordErrors.length > 0) {
+      setError(passwordErrors.join(", "));
+      setLoading(false);
+      return;
+    }
+
+    try {
+      await signup({
+        email: normalizedEmail,
+        password,
+      });
+
+      router.push("/login");
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+
+      if (Array.isArray(detail)) {
+        setError(detail.map((e: any) => e.msg).join(", "));
+      } else {
+        setError(detail || "Signup failed");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="relative min-h-screen overflow-hidden flex items-center justify-center p-4">
@@ -59,10 +107,14 @@ const handleSignup = async (e: React.FormEvent) => {
             <div className="w-12 h-12 rounded-xl bg-primary panel flex items-center justify-center">
               <Zap className="w-6 h-6" />
             </div>
-            <h1 className="font-comic text-4xl">SIGN UP</h1>
+
+            <h1 className="font-comic text-4xl">
+              SIGN UP
+            </h1>
           </div>
 
           <form onSubmit={handleSignup} className="space-y-4">
+
             <Field
               icon={<Mail />}
               label="Email"
@@ -78,7 +130,10 @@ const handleSignup = async (e: React.FormEvent) => {
               value={password}
               onChange={setPassword}
               trailing={
-                <button type="button" onClick={() => setShowPwd(!showPwd)}>
+                <button
+                  type="button"
+                  onClick={() => setShowPwd(!showPwd)}
+                >
                   {showPwd ? <EyeOff /> : <Eye />}
                 </button>
               }
@@ -90,36 +145,57 @@ const handleSignup = async (e: React.FormEvent) => {
               </div>
             )}
 
-            {/* Kept bg-accent from your original signup for visual distinction from login */}
-            <button className="w-full panel bg-accent py-3 font-comic text-xl">
+            <button
+              disabled={loading}
+              className="w-full panel bg-accent py-3 font-comic text-xl"
+            >
               {loading ? "CREATING..." : "CREATE ⚡"}
             </button>
+
           </form>
 
           <p className="mt-6 text-center font-bold">
             Already a hero?{" "}
-            <Link href="/login" className="underline">
+            <Link
+              href="/login"
+              className="underline"
+            >
               Login
             </Link>
           </p>
+
         </div>
       </div>
     </div>
   );
 }
 
-function Field({ icon, label, type, value, onChange, trailing }: any) {
+function Field({
+  icon,
+  label,
+  type,
+  value,
+  onChange,
+  trailing
+}: any) {
   return (
     <label>
-      <span className="font-comic">{label}</span>
+      <span className="font-comic">
+        {label}
+      </span>
+
       <div className="flex items-center gap-2 panel px-3 py-2">
         {icon}
+
         <input
           type={type}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) =>
+            onChange(e.target.value)
+          }
           className="flex-1 bg-transparent outline-none"
         />
+
         {trailing}
       </div>
     </label>
